@@ -1,2 +1,0 @@
-fn(axum::extract::State<AppState>, axum::extract::Path<Uuid>, Json<GuessRequest>) -> impl std::future::Future<Output = Result<Json<GuessResponse>, AppError>> {submit_guess}
-fn(axum::extract::State<AppState>, axum::extract::Path<Uuid>, Json<GuessRequest>) -> impl std::future::Future<Output = Result<Json<GuessResponse>, AppError>> {submit_guess}: Handler<_, _>

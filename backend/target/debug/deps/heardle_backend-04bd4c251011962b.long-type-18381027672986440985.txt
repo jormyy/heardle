@@ -1,2 +1,0 @@
-fn(axum::extract::State<AppState>, axum::extract::Path<Uuid>) -> impl std::future::Future<Output = Result<Json<SkipResponse>, AppError>> {skip_attempt}
-fn(axum::extract::State<AppState>, axum::extract::Path<Uuid>) -> impl std::future::Future<Output = Result<Json<SkipResponse>, AppError>> {skip_attempt}: Handler<_, _>
