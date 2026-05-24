@@ -1,0 +1,2 @@
+fn(axum::extract::State<AppState>, axum::extract::Path<Uuid>, Query<AutocompleteQuery>) -> impl std::future::Future<Output = Result<Json<Vec<AutocompleteResult>>, AppError>> {autocomplete}
+fn(axum::extract::State<AppState>, axum::extract::Path<Uuid>, Query<AutocompleteQuery>) -> impl std::future::Future<Output = Result<Json<Vec<AutocompleteResult>>, AppError>> {autocomplete}: Handler<_, _>

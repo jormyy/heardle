@@ -1,0 +1,2 @@
+fn(axum::extract::State<AppState>, axum::extract::Path<Uuid>) -> impl std::future::Future<Output = Result<Json<ClipResponse>, AppError>> {get_clip}
+fn(axum::extract::State<AppState>, axum::extract::Path<Uuid>) -> impl std::future::Future<Output = Result<Json<ClipResponse>, AppError>> {get_clip}: Handler<_, _>
