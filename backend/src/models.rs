@@ -230,4 +230,81 @@ mod tests {
         assert!(top[0].rank >= top[1].rank);
         assert!(top[1].rank >= top[2].rank);
     }
+
+    #[test]
+    fn test_is_version_track_square_brackets() {
+        assert!(is_version_track("Song [Live]"));
+        assert!(is_version_track("Song [Acoustic]"));
+        assert!(is_version_track("Song [Remix]"));
+        assert!(is_version_track("Song [Extended Mix]"));
+    }
+
+    #[test]
+    fn test_is_version_track_demo() {
+        assert!(is_version_track("Song (Demo)"));
+        assert!(is_version_track("Song (Demo Version)"));
+    }
+
+    #[test]
+    fn test_is_version_track_case_insensitive() {
+        assert!(is_version_track("Song (ACOUSTIC)"));
+        assert!(is_version_track("Song (LIVE AT WEMBLEY)"));
+        assert!(is_version_track("Song (REMASTERED 2011)"));
+    }
+
+    #[test]
+    fn test_deduplicate_empty_input() {
+        let result = deduplicate_versions(vec![]);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_deduplicate_single_song() {
+        let songs = vec![Song {
+            id: "1".into(),
+            title: "Alone".into(),
+            artist: "Heart".into(),
+            rank: 500,
+            album: "".into(),
+            album_art_url: "".into(),
+            preview_url: "".into(),
+        }];
+        let result = deduplicate_versions(songs);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].id, "1");
+    }
+
+    #[test]
+    fn test_deduplicate_prefers_higher_rank_regardless_of_input_order() {
+        // Higher-ranked remaster appears second — should still win
+        let songs = vec![
+            Song { id: "low".into(), title: "Song A".into(), artist: "Artist".into(), rank: 100, album: "".into(), album_art_url: "".into(), preview_url: "".into() },
+            Song { id: "high".into(), title: "Song A (Remastered)".into(), artist: "Artist".into(), rank: 900, album: "".into(), album_art_url: "".into(), preview_url: "".into() },
+        ];
+        let result = deduplicate_versions(songs);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].id, "high");
+        assert_eq!(result[0].rank, 900);
+    }
+
+    #[test]
+    fn test_clip_durations_has_six_entries() {
+        assert_eq!(CLIP_DURATIONS.len(), 6);
+    }
+
+    #[test]
+    fn test_clip_durations_are_strictly_ascending() {
+        for i in 0..CLIP_DURATIONS.len() - 1 {
+            assert!(
+                CLIP_DURATIONS[i] < CLIP_DURATIONS[i + 1],
+                "CLIP_DURATIONS[{}]={} should be less than CLIP_DURATIONS[{}]={}",
+                i, CLIP_DURATIONS[i], i + 1, CLIP_DURATIONS[i + 1]
+            );
+        }
+    }
+
+    #[test]
+    fn test_clip_durations_starts_at_one_second() {
+        assert_eq!(CLIP_DURATIONS[0], 1.0);
+    }
 }

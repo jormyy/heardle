@@ -93,4 +93,38 @@ mod tests {
         assert_eq!(state.get_cached_songs("artist:Drake").unwrap().len(), 1);
         assert_eq!(state.get_cached_songs("genre:Pop").unwrap().len(), 2);
     }
+
+    #[test]
+    fn test_cache_empty_songs_list() {
+        let state = AppState::new();
+        state.set_cached_songs("key:empty".to_string(), vec![]);
+        let result = state.get_cached_songs("key:empty").unwrap();
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_cache_get_is_idempotent() {
+        let state = AppState::new();
+        state.set_cached_songs("key".to_string(), vec![make_song("1"), make_song("2")]);
+
+        let first = state.get_cached_songs("key").unwrap();
+        let second = state.get_cached_songs("key").unwrap();
+        assert_eq!(first.len(), second.len());
+        assert_eq!(first[0].id, second[0].id);
+        assert_eq!(first[1].id, second[1].id);
+    }
+
+    #[test]
+    fn test_cache_returns_independent_clone() {
+        let state = AppState::new();
+        state.set_cached_songs("key".to_string(), vec![make_song("orig")]);
+
+        // Mutating the returned vec should not affect the cache
+        let mut retrieved = state.get_cached_songs("key").unwrap();
+        retrieved.clear();
+
+        let still_cached = state.get_cached_songs("key").unwrap();
+        assert_eq!(still_cached.len(), 1);
+        assert_eq!(still_cached[0].id, "orig");
+    }
 }

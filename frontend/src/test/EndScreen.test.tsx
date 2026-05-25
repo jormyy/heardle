@@ -63,4 +63,32 @@ describe('EndScreen', () => {
     render(<EndScreen won answer={song} attempts={1} elapsedMs={1000} onPlayAgain={() => {}} />);
     expect(screen.getByRole('link', { name: /deezer/i })).toHaveAttribute('href', expect.stringContaining('deezer.com'));
   });
+
+  it('Deezer link URL contains encoded song title and artist', () => {
+    render(<EndScreen won answer={song} attempts={1} elapsedMs={1000} onPlayAgain={() => {}} />);
+    const link = screen.getByRole('link', { name: /deezer/i });
+    const href = link.getAttribute('href') ?? '';
+    expect(href).toContain(encodeURIComponent('Bohemian Rhapsody Queen'));
+  });
+
+  it('shows the album name', () => {
+    render(<EndScreen won answer={song} attempts={1} elapsedMs={1000} onPlayAgain={() => {}} />);
+    expect(screen.getByText('A Night at the Opera')).toBeInTheDocument();
+  });
+
+  it('does not render an img when album_art_url is empty', () => {
+    const noArt = { ...song, album_art_url: '' };
+    render(<EndScreen won answer={noArt} attempts={1} elapsedMs={1000} onPlayAgain={() => {}} />);
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
+  it('rounds elapsed time to nearest second', () => {
+    render(<EndScreen won answer={song} attempts={1} elapsedMs={1499} onPlayAgain={() => {}} />);
+    expect(screen.getByText(/1s/)).toBeInTheDocument();
+  });
+
+  it('shows "Better luck next time" regardless of elapsed time on loss', () => {
+    render(<EndScreen won={false} answer={song} attempts={6} elapsedMs={0} onPlayAgain={() => {}} />);
+    expect(screen.getByText('Better luck next time')).toBeInTheDocument();
+  });
 });

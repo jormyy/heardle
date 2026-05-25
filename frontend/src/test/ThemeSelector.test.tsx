@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ThemeSelector from '../components/ThemeSelector';
@@ -118,5 +118,75 @@ describe('ThemeSelector', () => {
         undefined,
       );
     });
+  });
+
+  it('disables play button and shows Loading... while request is in-flight', async () => {
+    const { startGame } = await import('../api/client');
+    // Return a promise that never resolves so the component stays in loading state
+    vi.mocked(startGame).mockReturnValueOnce(new Promise(() => {}));
+
+    render(<ThemeSelector onStart={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /play/i }));
+
+    const btn = screen.getByRole('button', { name: /loading/i });
+    expect(btn).toBeDisabled();
+  });
+
+  it('shows error message when startGame throws', async () => {
+    const { startGame } = await import('../api/client');
+    vi.mocked(startGame).mockRejectedValueOnce(new Error('network error'));
+
+    render(<ThemeSelector onStart={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /play/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to start game. Please try again.')).toBeInTheDocument();
+    });
+  });
+
+  it('shows error message when getClip throws', async () => {
+    const { getClip } = await import('../api/client');
+    vi.mocked(getClip).mockRejectedValueOnce(new Error('clip error'));
+
+    render(<ThemeSelector onStart={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /play/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to start game. Please try again.')).toBeInTheDocument();
+    });
+  });
+
+  it('genre dropdown opens on focus and shows results', async () => {
+    render(<ThemeSelector onStart={() => {}} />);
+    await act(async () => {
+      screen.getByPlaceholderText(/search genres/i).focus();
+    });
+    await waitFor(() => {
+      expect(screen.getByText('Pop')).toBeInTheDocument();
+    });
+  });
+
+  it('selecting a genre adds it as a pill', async () => {
+    render(<ThemeSelector onStart={() => {}} />);
+    await act(async () => {
+      screen.getByPlaceholderText(/search genres/i).focus();
+    });
+    await waitFor(() => screen.getByText('Pop'));
+    await userEvent.click(screen.getByText('Pop'));
+    // The pill appears with the genre name
+    expect(screen.getByText('Pop')).toBeInTheDocument();
+  });
+
+  it('clicking Top 10 sets it as the active limit', async () => {
+    render(<ThemeSelector onStart={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Top 10' }));
+    expect(screen.getByRole('button', { name: 'Top 10' }).className).toContain('bg-zinc-900');
+  });
+
+  it('custom limit input sets a numeric limit', async () => {
+    render(<ThemeSelector onStart={() => {}} />);
+    const customInput = screen.getByPlaceholderText('Custom');
+    await userEvent.type(customInput, '15');
+    expect((customInput as HTMLInputElement).value).toBe('15');
   });
 });

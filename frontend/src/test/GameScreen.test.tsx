@@ -177,4 +177,63 @@ describe('GameScreen', () => {
       expect(defaultProps.onEnd).toHaveBeenCalledWith(false, mockSong, 6, expect.any(Number));
     });
   });
+
+  it('shows artist name in autocomplete suggestions', async () => {
+    render(<GameScreen {...defaultProps} />);
+    await userEvent.type(screen.getByPlaceholderText(/search for a song/i), 'boh');
+    await waitFor(() => {
+      expect(screen.getByText('Queen')).toBeInTheDocument();
+      expect(screen.getByText('Dandy Warhols')).toBeInTheDocument();
+    });
+  });
+
+  it('clears the search input after a guess is submitted', async () => {
+    const { submitGuess } = await import('../api/client');
+    vi.mocked(submitGuess).mockResolvedValueOnce({
+      correct: false,
+      attempt: 2,
+      game_over: false,
+    });
+
+    render(<GameScreen {...defaultProps} />);
+    await userEvent.type(screen.getByPlaceholderText(/search for a song/i), 'boh');
+    await waitFor(() => screen.getByText('Bohemian Rhapsody'));
+    await userEvent.click(screen.getByText('Bohemian Rhapsody'));
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/search for a song/i)).toHaveValue('');
+    });
+  });
+
+  it('does not show suggestions when query is empty', () => {
+    render(<GameScreen {...defaultProps} />);
+    // No typing — dropdown should not appear
+    expect(screen.queryByText('Bohemian Rhapsody')).not.toBeInTheDocument();
+  });
+
+  it('filters already-guessed songs from subsequent autocomplete', async () => {
+    const { submitGuess } = await import('../api/client');
+    vi.mocked(submitGuess).mockResolvedValueOnce({
+      correct: false,
+      attempt: 2,
+      game_over: false,
+    });
+
+    render(<GameScreen {...defaultProps} />);
+
+    // First search
+    await userEvent.type(screen.getByPlaceholderText(/search for a song/i), 'boh');
+    await waitFor(() => screen.getByText('Bohemian Rhapsody'));
+
+    // Guess Bohemian Rhapsody (id '42') — wrong
+    await userEvent.click(screen.getByText('Bohemian Rhapsody'));
+    await waitFor(() => screen.getByText('Attempt 2 of 6'));
+
+    // Search again
+    await userEvent.type(screen.getByPlaceholderText(/search for a song/i), 'boh');
+    await waitFor(() => {
+      expect(screen.queryByText('Bohemian Rhapsody')).not.toBeInTheDocument();
+      expect(screen.getByText('Bohemian Like You')).toBeInTheDocument();
+    });
+  });
 });
